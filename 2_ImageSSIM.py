@@ -1,14 +1,15 @@
 # import the necessary packages
-from skimage.measure import compare_ssim
-import screeninfo
+from skimage.metrics import structural_similarity
 import argparse
-import imutils
 import cv2
+import imutils
+
+import Util_MonitorClass
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
-ap.add_argument("-f", "--first", default="Ring.png", required=False, help="first input image")
-ap.add_argument("-s", "--second", default="RingX.png", required=False, help="second input image")
+ap.add_argument("-f", "--first", default="Content/Ring.png", required=False, help="first input image")
+ap.add_argument("-s", "--second", default="Content/RingX.png", required=False, help="second input image")
 args = vars(ap.parse_args())
 
 # load the two input images
@@ -21,7 +22,7 @@ grayB = cv2.cvtColor(imageB, cv2.COLOR_BGR2GRAY)
 
 # compute the Structural Similarity Index (SSIM) between the two
 # images, ensuring that the difference image is returned
-(score, diff) = compare_ssim(grayA, grayB, full=True)
+(score, diff) = structural_similarity(grayA, grayB, full=True)
 diff = (diff * 255).astype("uint8")
 print("SSIM: {}".format(score))
 
@@ -42,12 +43,10 @@ for c in cnts:
     cv2.rectangle(imageA, (x, y), (x + w, y + h), (0, 0, 255), 2)
     cv2.rectangle(imageB, (x, y), (x + w, y + h), (0, 0, 255), 2)
 
-for m in screeninfo.get_monitors():
-    print(str(m))
-
-# show the output images
-#cv2.imshow("Original", imageA)
-#cv2.imshow("Modified", imageB)
-#cv2.imshow("Diff", diff)
-#cv2.imshow("Thresh", thresh)
-#cv2.waitKey(0)
+# Show the output images if at least one monitor is present
+if (Util_MonitorClass.GetMonitorCount() > 0):
+    cv2.imshow("Original", imageA)
+    cv2.imshow("Modified", imageB)
+    cv2.imshow("Diff", diff)
+    cv2.imshow("Thresh", thresh)
+    cv2.waitKey(0)

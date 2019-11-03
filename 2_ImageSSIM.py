@@ -13,5 +13,7 @@ ap.add_argument("-f", "--first", default="Content/Ring.png", required=False, hel
 ap.add_argument("-s", "--second", default="Content/RingX.png", required=False, help="second input image")
 args = vars(ap.parse_args())
 
-ssimValue = Util_SSIM.GetSSIMFromFiles(args["first"], args["second"])
+monitorAvailable = True if Util_MonitorClass.GetMonitorCount() > 0 else False
+
+ssimValue = Util_SSIM.GetSSIMFromFiles(args["first"], args["second"], showImages=monitorAvailable, showContours=True)
 print("SSIM: {}".format(ssimValue))

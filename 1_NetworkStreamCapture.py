@@ -1,10 +1,17 @@
-# import the necessary packages
+from datetime import datetime
 from imutils.video import FileVideoStream
 from imutils.video import FPS
-import numpy as np
 import imutils
+import numpy as np
 import time
 import cv2
+
+import Util_MonitorClass
+
+# Import custom Python files from relative directories
+# As it's relative, you must run this file from within its directory
+
+monitorCount = Util_MonitorClass.GetMonitorCount()
 
 # start the file video stream thread and allow the buffer to
 # start to fill
@@ -15,8 +22,13 @@ time.sleep(1.0)
 # start the FPS timer
 fps = FPS().start()
 
+start_time = datetime.now()
+
+run_time = 0
+prev_run_time = 0
+
 # loop over frames from the video file stream
-while fvs.more():
+while (fvs.more() and (datetime.now() - start_time).seconds <= 10):
     # grab the frame from the threaded video file stream, resize
     # it, and convert it to grayscale (while still retaining 3
     # channels)
@@ -29,11 +41,20 @@ while fvs.more():
     cv2.putText(frame, "Queue Size: {}".format(fvs.Q.qsize()),
         (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
+    run_time = (datetime.now() - start_time).seconds
+    if (run_time > prev_run_time):
+        print("Run Time: {}".format(run_time))
+        prev_run_time = run_time
+    # Display remaining run time
+    cv2.putText(frame, "Run Time: {}".format(run_time),
+        (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+
     # show the frame and update the FPS counter
     # Don't show when running on Jenkins/via SSH, as there's no UI.
     # Doing so will result in a "cannot connect to X server" error.
-    #cv2.imshow("Frame", frame)
-    cv2.waitKey(1)
+    if (monitorCount > 0):
+        cv2.imshow("Frame", frame)
+        cv2.waitKey(1)
     fps.update()
 
 

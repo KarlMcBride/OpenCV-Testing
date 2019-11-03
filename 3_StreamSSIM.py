@@ -1,6 +1,8 @@
 from datetime import datetime
 from imutils.video import FileVideoStream
 from imutils.video import FPS
+from matplotlib import pyplot as plt
+
 import copy
 import imutils
 import numpy as np
@@ -26,13 +28,16 @@ start_time = datetime.now()
 run_time = 0
 prev_run_time = 0
 
-frame_width_resize = 400
+frame_width_resize = 450
 
 # Need to initialise frame and last frame at start to get SSIM reading
 frame = fvs.read()
 frame = imutils.resize(frame, width=frame_width_resize)
 last_frame = frame
 ssimValue = 0
+
+time_list = []
+ssim_list = []
 
 # loop over frames from the video file stream
 while (fvs.more() and (datetime.now() - start_time).seconds <= 10):
@@ -47,7 +52,7 @@ while (fvs.more() and (datetime.now() - start_time).seconds <= 10):
 
     run_time = (datetime.now() - start_time).seconds
     if (run_time > prev_run_time):
-        print("Run Time: {}".format(run_time))
+        #print("Run Time: {}".format(run_time))
         prev_run_time = run_time
 
 
@@ -55,6 +60,9 @@ while (fvs.more() and (datetime.now() - start_time).seconds <= 10):
     current_frame = copy.deepcopy(frame)
     ssimValue = Util_SSIM.GetSSIM(frame, last_frame, showImages=False, showContours=False)
     last_frame = copy.deepcopy(current_frame)
+
+    time_list.append(datetime.now())
+    ssim_list.append(ssimValue)
 
     print("SSIM {}".format(ssimValue))
 
@@ -75,4 +83,14 @@ while (fvs.more() and (datetime.now() - start_time).seconds <= 10):
         cv2.waitKey(1)
     fps.update()
 
+plt.figure()
 
+plt.xlabel("Time")
+plt.ylabel("SSIM against last frame")
+plt.ylim([0, 1])
+plt.yscale('linear')
+plt.grid(True)
+plt.plot(ssim_list)
+plt.savefig('plot.png')
+if (monitorAvailable):
+    plt.show()

@@ -39,6 +39,10 @@ ssimValue = 0
 time_list = []
 ssim_list = []
 
+# Create video writer instance
+frame_height, frame_width, channels = frame.shape
+recording_file = cv2.VideoWriter('output.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width, frame_height))
+
 # loop over frames from the video file stream
 while (fvs.more() and (datetime.now() - start_time).seconds <= 10):
     # grab the frame from the threaded video file stream, resize
@@ -49,6 +53,8 @@ while (fvs.more() and (datetime.now() - start_time).seconds <= 10):
     #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     #frame = np.dstack([frame, frame, frame])
 
+    # Write the frame into the file 'output.avi'
+    recording_file.write(frame)
 
     run_time = (datetime.now() - start_time).seconds
     if (run_time > prev_run_time):
@@ -83,11 +89,12 @@ while (fvs.more() and (datetime.now() - start_time).seconds <= 10):
         cv2.waitKey(1)
     fps.update()
 
-plt.figure()
+recording_file.release()
 
+plt.figure()
 plt.xlabel("Time")
 plt.ylabel("SSIM against last frame")
-plt.ylim([0, 1])
+plt.ylim([0, 1.1])
 plt.yscale('linear')
 plt.grid(True)
 plt.plot(time_list, ssim_list)

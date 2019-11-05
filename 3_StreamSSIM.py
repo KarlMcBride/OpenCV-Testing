@@ -12,6 +12,30 @@ import cv2
 import Util_MonitorClass
 import Util_SSIM
 
+
+# Control variables - impact performance and event detection
+consecutive_frames_for_lock_unlock = 5  # Number of frames to take average of to detect lock - reduces flip flopping
+frame_width_resize = 450                # Frame width in pixels - smaller size reduces processing duration
+locked_ssim_trigger = 0.9999            # running SSIM average above this amount will log a "locked" event, below will clear it
+record_duration_time_secs = 120         # recording time in seconds
+
+
+def detect_locked_stream(last_x_list, lock_detected):
+    global locked_events
+    total_ssim = 0
+    for ssim in last_x_list:
+        total_ssim += ssim
+    average_ssim = total_ssim / len(last_x_list)
+    if (average_ssim > locked_ssim_trigger and lock_detected == False):
+        print("Lock detected: {}".format(datetime.now()))
+        lock_detected = True
+        locked_events += 1
+    elif (average_ssim < locked_ssim_trigger and lock_detected == True):
+        print("Recovered    : {}".format(datetime.now()))
+        lock_detected = False
+    return lock_detected
+
+
 monitorAvailable = True if Util_MonitorClass.GetMonitorCount() > 0 else False
 
 # start the file video stream thread and allow the buffer to
@@ -28,7 +52,9 @@ start_time = datetime.now()
 run_time = 0
 prev_run_time = 0
 
-frame_width_resize = 450
+locked_events = 0
+locked_frames = 0
+total_frames = 0
 
 # Need to initialise frame and last frame at start to get SSIM reading
 frame = fvs.read()
@@ -39,12 +65,14 @@ ssimValue = 0
 time_list = []
 ssim_list = []
 
+lock_detected = False
+
 # Create video writer instance
 frame_height, frame_width, channels = frame.shape
 recording_file = cv2.VideoWriter('output.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 30, (frame_width, frame_height))
 
 # loop over frames from the video file stream
-while (fvs.more() and (datetime.now() - start_time).seconds <= 10):
+while (fvs.more() and (datetime.now() - start_time).seconds <= record_duration_time_secs):
     # grab the frame from the threaded video file stream, resize
     # it, and convert it to grayscale (while still retaining 3
     # channels)
@@ -70,7 +98,11 @@ while (fvs.more() and (datetime.now() - start_time).seconds <= 10):
     time_list.append(datetime.now())
     ssim_list.append(ssimValue)
 
-    print("SSIM {}".format(ssimValue))
+    #print("SSIM {}".format(ssimValue))
+    lock_detected = detect_locked_stream(ssim_list[-consecutive_frames_for_lock_unlock:], lock_detected)
+    if (lock_detected):
+        locked_frames += 1
+    total_frames += 1
 
     # show the frame and update the FPS counter
     # Don't show when running on Jenkins/via SSH, as there's no UI.
@@ -90,6 +122,12 @@ while (fvs.more() and (datetime.now() - start_time).seconds <= 10):
     fps.update()
 
 recording_file.release()
+
+percentage_locked_frames = (locked_frames * 100) / total_frames
+print("Total Frames : {} ".format(total_frames))
+print("Locked Frames: {} ".format(locked_frames) + "({0:.2f}%)".format(percentage_locked_frames))
+print("Locked Events: {} ".format(locked_events))
+
 
 plt.figure()
 plt.xlabel("Time")

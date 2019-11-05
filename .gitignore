@@ -1,2 +1,5 @@
 # Ignore directories
 __pycache__
+
+# Ignore specific files
+plot.png

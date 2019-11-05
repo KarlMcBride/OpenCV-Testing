@@ -90,7 +90,7 @@ plt.ylabel("SSIM against last frame")
 plt.ylim([0, 1])
 plt.yscale('linear')
 plt.grid(True)
-plt.plot(ssim_list)
+plt.plot(time_list, ssim_list)
 plt.savefig('plot.png')
 if (monitorAvailable):
     plt.show()

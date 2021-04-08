@@ -41,7 +41,7 @@ monitorAvailable = True if Util_MonitorClass.GetMonitorCount() > 0 else False
 # start the file video stream thread and allow the buffer to
 # start to fill
 print("[INFO] starting video file thread...")
-fvs = FileVideoStream("http://192.168.1.134:8081").start()
+fvs = FileVideoStream("rtsp://192.168.1.245:554/videoStreamId=1").start()
 time.sleep(1.0)
 
 # start the FPS timer
